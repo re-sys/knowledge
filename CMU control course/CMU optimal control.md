@@ -1018,5 +1018,16 @@
 				- keep the trajectory xbar and ubar to track it
 				- constraints to conelimit but we cannot constraint the torque limit we hope it can work well
 			- 
+- L22: how to drive game Theoretic MPC
+	- History
+		- Primitive demos going back 1920s-30s
+		- First serious modern work in 1980s at CMU + Mercedes-Beuz
+		- Lots of demos in 1990s with 98%+autonomy on long highway trips
+		- DARPA Grand Challenge in early 2000s greatly accelerated progress
+	- The Full stack
+		- perception, high-level ,planner, path planner MPC, motor
+		- High-level: route planning by graph search
+		- Path planner Generate Smooth spline with obstacle avoidance
+		- MPC
 - [[recitation]]
 - [[代码总结]]
