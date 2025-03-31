@@ -1,0 +1,261 @@
+- 1. Linear system Derivatives Taylor Series
+	- 只要可以写成A(t)x都是linear，不管时间
+	- linear system 有表达式解
+	- ZOH，是常见的离散控制零阶保持器
+		- 可以转换为$\dot{z}$=[A B; 0 0]z,这样就可以写出显示表达式
+		- 最后得到$\dot{x}=A_{d}x+B_{d}u$ where Ad Bd is the upper column of exp([A B; 0 0]*dt)
+	- derivatives
+		- 主要用来做非线性函数的泰勒展开，一般一阶的足够
+	- system categories
+		- $\dot{x}=f(x)$ autonomous
+		- $\dot{x}=f(x,u)$ controlled
+	- hessian
+		- like a curvature of vector
+		- eigenvalue of the hessian can tell you convex or saddle point
+	- optimal control and reinforce 
+		- 他们的目标都是做很好的事情，有些事情可以用optimal control做的很好
+		- 有些东西RL可以做的很好，所以两者的都有优势
+		- RL在部署上也是坑了个在仿真的质量不好，就会迁移非常困难，所以都不简单
+- 2. Newton's Method, Constrained Optimization
+	- newton is to find a root 
+		- x = xk-$\frac{ \partial r }{ \partial x }^{-1}r(x_{k})$
+		- two representing way we can direct use (x-xk)or $\Delta x$
+		- where $\Delta x=\frac{ \partial r }{ \partial x }^{-1}r(x_{k})$
+		- $x_{k+1}=x_{k}+\alpha \Delta x$
+	- convergence quadratic 
+		- $e_{k+1}=e_{k}^{2}$
+		- not the max convergence .but with the same algorithm complexity Newton is the fastest one
+	- Optimization
+		- minx f(x) KKT: $\nabla_{x}f(x)=0$
+		- we can just find the root of that one
+		- root finding same as $\min\limits_{x}f(x_{k})+\frac{ \partial f }{ \partial x }\Delta x+ \frac{1}{2}\Delta x^{T}\frac{ \partial^{2} f }{ \partial x^{2} }\Delta x$
+		- $\Delta x=-H^{-1}g$
+	- least squared problem
+		- we likes quadratic forms because they have very easy derivatives
+		- if A is 有非常多的约束，也就是竖直的，那就有最接近的
+			- 解出来是一个伪逆的函数
+			- 方法是写出ax-b norm 然后展开，求梯度为0即可
+		- 如果A有较少的约束，我们一般需要$\begin{Vmatrix}x\end{Vmatrix}$最小
+			- $L(x,\lambda)=\frac{1}{2}x^{T}x+\lambda ^{T}(Ax-b)$
+			- kkt: $\nabla_{x}L(x,\lambda)=x+A^{T}\lambda$
+				- Ax-b=0
+		- 第一种解法
+			- 使用矩阵$\begin{bmatrix}I & A^{T} \\ A & 0\end{bmatrix}\begin{bmatrix}x \\ \lambda \end{bmatrix}=\begin{bmatrix}0 \\ -b\end{bmatrix}$
+		- 第二种解法
+			- 直接通过第一个式子解出x关于lam表达式，带入第二个式子，解出lam，放回去获得x
+			- $x=A^{T}(AA^{T})^{-1}b$
+	- 最后对于一般的最优化问题有等式约束
+		- $\min\limits_{x}f(x) s.t.C(x)=0$
+		- then L = f+lamC
+		- then kkt: df+dClam
+			- C(x)=0
+		- then we get newton method to find root
+			- we use Newton method to calculate dz = H,dCT,dC,0 -1 -dL,-C(x)
+- 3.KKT Conditions, Augmented Lagrangian
+	- L = f + lamTC+muTg
+		- stationarity: dfdx+dCdxTlam+dgdxTmu
+		- primal feasibility: C=0 g<0
+		- dual feas: mu>0
+		- compensatory slacky: mu ctimes g=0
+	- kkt is the sufficient condition to find a local minima
+		- in convex problem minima means global minima
+	- QP
+		- min 1/2xTQx + qTx+r
+			- Ax-b=0
+			- Gx-h<=0
+		- solute
+			- L = J + lamT(Ax-b)+muT(Gx-h)
+				- dJ+ATlam+GTmu=0
+				- Ax-b=0, Gx-h=0
+				- mu>0
+				- mu element wise multiplication
+		- QP AL solver
+			- Lr = L + rho (Ax-b)T(Ax-b)+rho(Gx-h)Ir(Gx-h)
+			- Ir=zeros() ifGx-h<0 and mu=0 Ir=0 else lr=1
+			- Lr = xT()x+()x + ...
+			- init x=0,lam=0,mu=0,r=1,phi=10
+- 4.LQR and extensions
+	- LQR roadmap
+		- ![[LQR_formula]]
+		- it has stage cost and terminal cost
+		- $x_{0}=x_{0}$
+		- finite horizon LQR(time variant LQR TVLQR)
+		- it is not iLQR(very different)
+	- policies
+		- $\pi(x)=u$
+		- TVLQR 
+		1. $\pi(x)=solve_{QP}(A,B,Q,R,Q_{f})$
+		2. $\pi(x)=-Kx$ for Ricatti
+			- where K= solve infinite horizon LQR(dLQR(A,B,Q,R))
+			- because if x = Ax+Bu xg = Axg+Bug
+				- then x+1-xg = A(x-xg)+B(u-ug)
+				- so A,B for new system doesn't change
+				- we can still use the K solved from dLQR
+				- u = ug-K(x-xg)
+			- This is just for linear system if A and B should depend on x then it is not linear, it cannot do that. This problem is the fastest way to control a robot. 
+				- Because we can directly do them offline then use the result
+	- extension to nonlinear:
+		- $x_{k+!}=f(x_{k},u_{k})$
+		- $\bar{x},\bar{u}$ is equilibrium
+		- 1. $x_{k+1}\approx$ feq + dfdx dx+ dfdu du
+		- define x = xbar+dx,u=ubar+du
+		- 2. xbar + dx = feq + dfdx dx + dfdu du
+			- dx = dfdx dx+dfdu du
+			- this formula is usually used
+- 5.HW1 Review Convex.jl 
+	- lam can be anything in lagrangian it can seemed as 梯度加权相等，也可以看作惩罚项，其实我们是最大化Lag中的lam，最小化
+	- 通常做增广拉格朗日，如果每次minimize就更新一个dual，可能导致太快更新dual，而不能收敛，所以可以增加判断，如果gra足够小，才可以更新dual，这样可以保证收敛
+	- 如果想要入门简单，最好使用cvx的文件，因为他们通常是正确的，但是真实的机器人上面，我们最好将所有内容显示的做出来，这样效果是最快的
+	- 我们练习的时候可以随意的使用很多次for loop为了有很好的读法
+	- convex MPC to nonlinear systems
+		- first assume our discete time dynamics are the following
+			- dx = Ax+Bu
+		- then define xgoal ugoal
+		- then do infinite TVLQR get K_inf
+		- then realize u = -K(x-xgoal)
+- 6.MPC, HW2
+	- Trajectory Optimization
+		- $\min\limits_{x_{1:N},u_{1:N}} J(x,u)$
+		- s.t. $x_{k+1}=f(x_{k},u_{k}), g(x,u)\leq 0$
+	- FHLQR
+		- ![[LQR_formula]]
+		- 1. solve with cvx(very fast and global optimum)
+		- 2. Ricatti recursion for $u_{i}=-k_{i}x_{i}$
+	- Sim to real gap
+		- unmodeled dynamics
+		- noisy actuators
+		- state estimation
+		- if we execute $u_{cvx}$ we will swarm up a little and drift
+		- if we use $u_{i}=-K_{i}x_{i}$
+			- Ricatti can be think as dynamic programming
+			- ![[Ricatti]]
+			- many thing can not used in LQR problem
+	- MPC
+		- if we want u become smooth we can do some constraint
+			- $\begin{vmatrix}u-u_{old}\end{vmatrix}\leq \Delta u_{max}$
+		- MPC "horizon", "window", very common is 20
+- 7. LQR Discretization, Linearization
+	- linear optimization
+		- yes:quadratic cost
+			- yes: unconstrained
+				- TVLQR
+					- tracking , or any finite the trajectory
+					- if we have a specific strategies, and no other constraints just dynamics it's really good to do the thing.
+					- and time variant can also do this
+				- IHLQR
+					- t approach infinite
+					- regulator stabilize one point
+					- Ricatti to find a convergence K
+			- no:constrained
+				- MPC
+	- LTI ODEs
+		- with xdot=Ax
+		- we can directly do a new A telta to Ad and Bd
+		- exp(A)=I+A+1/2*A^2
+		- RK4 is also zero order hold 
+		- first t=0, then t = 1/2dt t=1/2*dt t=dt
+			- k1 = dt*f(xk,uk)
+			- k2 = dt*f(xk+k1/2,uk)
+			- k3 = dt*f(xk+k2/2,uk)
+			- k4 = dt*f(xk+k3,uk)
+			- xk+1=xk+1/6*(k1+2k2+2k3+k4)
+	- linearize at xbar and ubar
+		- if xbar and ubar are dynamical feasible then $\bar{x}_{k+1}=f(\bar{x}_{k},\bar{u}_{k})$
+		- we can linearize the dynamic by first order Tylor
+		- then xdelta=Ak*xdelta+Bk*udelta
+		- If we just linearize by the directly continuous time form
+			- it would lose some information from t to t+1
+			- while the rk4 derivatives will concern about it 
+			- so rk4 to linearize is much suitable for this model
+			- and it is fast enough in modern computor
+- 8.Rotation Matrices, Quaternions, Optimizing Attitude 
+	- attitude is how two frame is related to each other
+		- DCM
+			- first is rotation matrix you can think it as a cos$\theta$
+			- it belongs to SO(3),which mean det=1 inverse=transpose
+			- skew/hat/crossproduct matrix skew(A), \[Ax\]
+		- angle-axis 
+			- kinematics are awful singular
+			- for any attitude we have phi under 2pi
+			- singularity at $\theta=\pi$
+		- there are special log, exp for these matrices
+			- if $\phi^{B}$ is small, $Q_{B}\approx I+\hat{\phi}^{B}$
+			- since Q=exp($\phi$)
+		- Quaternion
+			- q and -q represent one attitude 2 different rotation
+			- q has many operations like skew and derivatives 
+			- we have the relationship between q and Q
+			- 4 dof -1 dof=3dof because unit norm
+		- quaternion vs DCM
+			- when we do simulation there is drift in them
+			- but regulate Q by SVD to SO3 manifold is much expensive than quaternion just doing normalization
+		- Rodriguez parameter "Gibbs vector"
+			- g = $\frac{v}{s}$, so $\in R^{3}$
+			- we see q,-q,describe same attitude, g doesn't care
+			- still singular at 180
+			- caley map
+				- q = normalize$\begin{bmatrix}1 \\ g\end{bmatrix}$
+	- Optimizing over attitude
+		- we think of things additively if we have a small change to x called $x+\Delta x$
+		- but this doesn't mean for anything for quaternion
+		-  to optimize f(q)
+			- first find derivative
+			- then multiply G
+			- g = $\frac{ \partial f }{ \partial q }G$
+			- then line search a
+			- q = L(gk)quat_from_rp(ag)
+			- end
+		- quaternion is most common used in the practical use in optimization
+- 9.DIRCOL iLQR,HW3 Walkthrough
+	- DIRCOL
+		- $\min\limits_{x,u} l_{N}(x_{N})+\sum_{i=1}^{N-1}l(x_{i},u_{i})$
+		- s.t. $x_{k+1}=f(x_{k},u_{k})$ discrete dynamics
+		- some other nonlinear constraints g(x,u)<=0,c(x,u)=0
+		- most important is to satisfy the dynamics
+			- explicit expression 0=f(x,u)-x
+			- implicit expression 0=f(x,u,xk+1)
+			- because this solver don't care we need explicit Jacobian so here we just need to use hermite Simpson integrator as a dynamics constraint
+		-  solve NLP(IPORT/SNOPT)
+			- z=\[xuxuxuxu],
+			- $\min\limits_{z}f(z)$
+			- s.t. $c_{eq}=0$
+			- $\bar c \leq c_{ineq}\leq \bar c$
+			- $\bar{z}\leq z\leq \bar{z}$
+			- this problem is not guarantee a solution
+			- but we can warm start a very closed to the solutions
+			- then this solver may get the dynamics feasible
+			- having a good initial guess is the critical
+	- iLQR
+		- $\min\limits_{x,u} l_{N}(x_{N})+\sum_{i=1}^{N-1}l(x_{i},u_{i})$
+		- s.t. $x_{1}=x_{IC}$
+		- $x_{k+1}=f(x_{k},u_{k})$
+		- then we have a solution $x^{*},u^{*},K=iLQR(x_{ic},u_{guess},f,l,l_{N})$
+- 10.Collision Avoidance
+	- L1 trick
+		- $min f(x)+\begin{vmatrix}x\end{vmatrix}_{1}$
+		- s.t. C(x)=0
+		- this will encourage the sparsity of x 
+			- because if no f x will go to as many zero as it can to satisfy C(x)=0
+		- the trick to represent it is to introduce a new variable t
+			- such that t>=x and t>=-x
+			- f = f+$1^{T}t$
+			- it makes the problem from non-smooth to smooth one
+	- Avoiding collisions
+		- methods
+			- search based, sample based planners
+				- A-star if grid exists (search)
+				- RRT, RRT-star (sample)
+				- very useful in real time but we can't guarantee the time amount
+			- control barrier function CBF
+				- u_safe = $f_{CBF}(u)$
+				- ![[Pasted image 20250327180342.png]]
+			- motion planning with collision avoidance
+				- collision is always something  always non-convex
+					- because the point between two feasible points will inside the collision place
+					- this is the reason why we love the CBF and it is popular
+					- we can only use it in DIRCOL
+		- Decompose the everything with convex shapes
+			- and then we can use DCOL to solve
+			- because it can quickly judge whether it collide
+			- and it has smooth differentiate
+		- fCBF is somehow less than 5 milliseconds

@@ -1,0 +1,30 @@
+- undirected graphs
+	- set of vertices connected pairwise by edges
+	- why
+		- many applications
+		- many algorithm
+		- broadly useful
+		- like internet properties with computers and communication device
+		- precisely communication pattern
+		- huge and flexible and dynamic
+		- give some insight about the graph
+	- terminology
+		- Path: Sequence of vertices connected by edges
+		- cycle: Path whose first and last vertices are the same
+		- Two vertices are connected if there is a path between them
+	- Some problem
+		- Path: Is there a path between s and t
+		- Shortest ath what is the shortest path between s and t
+		- Cycle is there a cycle in the graph
+		- Euler tour Is there a cycle that uses ech edge exactly onece
+		- Hamilton tour Is there a cycle
+		- which of these problem is difficult and 
+	- representation
+		- use integers between 0 and V-1
+	- set of edges graph representation
+		- maintain a list that represent the link
+	- Adjacency-matrix graph representation
+		- maintain a two-dimensional V-by-V boolean array
+		- not widely used too big
+	- Adjacency-list graph representation
+		- 

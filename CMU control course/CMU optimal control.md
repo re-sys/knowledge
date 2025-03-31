@@ -1,0 +1,1022 @@
+- 概述
+    - dynamics
+        - discrete time dynamics
+        - continuous time dynamics
+            - smooth system(没有碰撞）
+            - for a mechanical system x=[q v]
+                - q 是configuration pose，各种状态，不一定是向量
+                - v，线性速度，角速度，关节速度
+            - example
+                - pendulum x=[[theta,thetadot]
+                - 这里theta是属于圆
+            - control affine system
+                - format:
+                    ![](https://rcn7qf9o860t.feishu.cn/space/api/box/stream/download/asynccode/?code=Y2M3MDE5YjQ0OTg1YTJjMzAyNjgyMmJmOWU5NTg1YmFfS01WUHZNT0EzbW5uM2VjTlNJMkNCV1c1UDhvSTFPMlhfVG9rZW46UDlIU2I1U1JPb2N6SXp4MUd6bWNLYngwbkRmXzE3NDEzMzM3Nzc6MTc0MTMzNzM3N19WNA)
+                - most systems can be put in this form
+            - manipulator dynamics
+                - 机械臂模型有两个不同公式
+                    ![](https://rcn7qf9o860t.feishu.cn/space/api/box/stream/download/asynccode/?code=YjUxNGUzMDViNWUwYmNiMzQ5NzlkZGFlZWE4ZmQ5ZmVfVlBpNk1oRzAwYmp6WmNyZ3dDUzVQSXV6YWZJUHlaNU9fVG9rZW46THlGTGJJUkZVb1FaaDB4bXgwMmN6bUxXbnFjXzE3NDEzMzM3Nzc6MTc0MTMzNzM3N19WNA)
+            - Linear system（be wise linearize almost 90 percent control is linearization it does pretty well）
+                ![](https://rcn7qf9o860t.feishu.cn/space/api/box/stream/download/asynccode/?code=MWMyN2VhM2Y5N2E0YzU0OGM3N2E0NjU4MzAzNWVkOTZfNzI1eG5oNFp6b0JmR1BsTXpvNDI1NU1UUGppa05nd3lfVG9rZW46QU5XeGJrSTBpb0Q5MU14RzRhaGNNemhTbmlmXzE3NDEzMzM3Nzc6MTc0MTMzNzM3N19WNA)
+            - equilibria: we can design control to reshape vector field and equilibria
+                - in general, we need to find the zero of f
+            - stability of equilibria
+                - key is slope if we need every slope smaller than 0
+            - In higher dimension
+                - Jacobian eigen real part < 0->stable
+- 动力学离散化
+    - last time
+        - control dynamics Manipulator dynamics equilibria stability(local)
+    - Today: Discrete time signs more on stability
+        - Motivation
+            - in general we can't solve dx=fx for x
+            - computationally need to represent x with discrete xn
+            - Discrete time models can capture some effects that continuous ODEs can't
+        - discrete time dynamics
+            - explicit form
+                - xn+1=fd(xn,un)
+            - simplest discretization
+                - xn+1=xn+hf(xn,un), h=time step,forward euler integration
+            - pendulum sim
+                - h=0.01 0.001 ->blow up
+        - stability of discrete time systems
+            - if discrete time must have a stable we need the A (in equilibria)has smaller than one norm
+            - linear approximation is always overshooting
+        - take-away message
+            - be careful when dicrete
+            - don't use forward Eule integration
+            - A better explicit integrator
+                - 4th order Range Kutta Method(industry standard)
+                - Intuitior
+                    - Euler fits a live segment over each time step
+                    - RK4 fits a cubic polynomial -> much better accuracy
+                - Psecdo code
+                    - xn+1=fd(xn)
+                        - k1=f(xn)
+                        - k2=f(xn+h/2k1)
+                        - k3=f(xn+h/2k2)
+                        - k4=f(xn+hk3)
+                        - xn+1=xn+h/6(k1+2k2+2k3+k4)
+                - take away
+                    - accuracy win >> additional compute cost
+                    - even good integrators have issues always sanity check
+                - emplicit form
+                    - fd(xn+1,xn,un)=0
+                    - simplest version
+                        - xn+1=xn+hf(xn+1) backward Euler evaluate f at future time
+                        - solve xn+hfd(xn+1)-xn+1=0
+                        - it can get the result commonly not blow up
+                        - video games will use this all the way it seem like it get enery damping behaviour
+                        - game engine damping behaviour is much preferred pybullet or mujuco use this integration method in default
+- optimization（上)
+    - last time:
+        - discrete time dynamic
+        - stability of discrete time systems
+        - RK4
+        - forward backward Eular
+    - Notation
+        - given f(x):Rn->R
+            - df/dx=都是分子布局，因为可以帮助泰勒展开，不用写转置
+            - conventions make the chaim rule work df/dy*dy/dx矩阵相乘就可
+            - for convenience deltaf=df/dxT column vector delta2f=d(deltaf)/dx Hessian vector(often mass matrix)
+    - Root finding
+        - given f(x) find x* such that f(x*)=0
+            - Example: equilibrium of a continuous-time dynamic
+            - closely velated: fixed point such that f(x)=x discrete time dynamic
+        - Fixed-point Iteration
+            - simplest solution method
+            - If a fixed point is stable, just iterate the dynamics until it converges to x*
+            - only works or stable x* and has slow convergence
+        - Newton's Method
+            - f(x+dx)=f+df/dx*dx
+            - apply approximation =0 ->dx=-df/dx-1f
+            - x=x+dx
+            - repeat until convergence
+        - Example back eular if dimension is less than 10 is good and very fast(quadrotic) to use Newton but dimension is high it is better not to use it
+            - very fast
+            - can get machine precision
+            - most expensive part is solving a linear system O(n3)
+            - can improve complexity by taking advantage of problem stucture
+    - Minimization
+        - min x f(x), f(x): Rn->R
+            - If f is smooth df/dx x*=0 at a local minimum
+            - now we have a root-finding problem deltaf=0
+            - deltaf = deltaf+Hessian*x->x=-Hessian-1deltaf
+            - x=x+dx repeat until converge
+            - it just finds root, it finds the gradient equal zero closest flat point
+        - Intiuition
+            - fit a quadratic approximation
+            - exactly minimize approximation
+        - Example
+            - min f=x4+x3+-x2-x1
+            - start at: 1, -1.3 0.0
+        - Take away messages
+            - Newton is a local root-finding method will converge to the closest fixed point to the initial guess(min,max saddle)
+        - sufficient conditions
+            - gradient f=0 first-order necessary condition for a minimum not a sufficient condition
+            - let's look at scalar case:
+                - dx=-(delta2f)-1grdient -:decent gra2f-1is learning rate
+                - gra2f>0->descent (minimization)
+                - gra2f<0 ascent(maximization)
+            - In Rn gra2f>0 positive definite->descent
+            - if gra2f>- everywhere(any x)<->f is strongly convex->can always solve with Newton
+            - Usually not true for hard/nonlinear problem
+        - Regularization:
+            - practical solution to make sum always minimizing
+                - H=gra2f
+                - H=H+beta*I end until test H is pd
+                - dx=-H-1graf
+                - x=x+dx
+            - Also called "damped Newton"
+                - gradient descent and newton combine together if NewtoOn does other direction gradient descent will be larger than H
+                - but it may do the overshoot
+                - eigen decomposition is expensive
+                - do chelosky to find whether pd
+            - Example
+                - minimize the work will overshoot but it works well.
+            - gradient descent is a kind of fixed point iteration. it is kind of a gradient flow, we just use its vector field information its not pricise. it will have flow and it will oscillate it will never go to the exact point.
+- optimization(中)
+    - last time:
+        - root finding.
+        - Newton's Method: no deadbeat error
+        - Minimizing
+        - Regularization
+    - Line serach
+        - often dx step from Mewton overshoot the minimum
+        - to fix this, check f(x+dx) and "backtrack" until we get a "good" reduction
+        - many strategies
+        - a simple effective one is Armijo Rule
+            - a=1 step length
+            - while f(x+dx) > f(x)+bag(f)dx. b:tolerance, expected reduction from linearization
+            - a=ca c<1
+            - end
+        - Intuition
+            - make sure stop agrees with linearization with some tolerance b
+            - c=1/2 b=10e-4-0.1
+            - regularization and this back tracking is always we need to do
+        - take away
+            - Newton with simplest cheap modifications (globalization strategies) is extremely effective at finding local optima
+    - constrained Minimization
+        - equality constraints
+            - minx f(x) scalar function s.t. c(x)=0
+        - first order necessary conditions:
+            - 1) Need gra(f)=0 in free direction
+            - 2) Need c(x)=0
+            - any non-zero component of gra(f) must be normal to the constraint surface/manifold
+                - gra(f)+lamgra(C)=0
+            - In general df/dx+lamdC/dx=0 , lam belong Rn
+        - based on a lagrangian function
+            - L(x,lam)=f(x)+lam*C(x)
+            - gra(L)x=df/dx+lam*dC/dx
+            - gra(L)lam=C(x)=0
+            - we can solve this with Newton
+                - fitsy gra(L(x+dx,lam+lam))=gra(L(x))+Hdx+dC/dx dlam
+                - gra(L(x+dx,lam+dlam)lam)=C(x)+dC/dx*dx
+                - it has a matrix form like Hessian thing in left top and dC/dx in the back slash, and it will equal deltaL C
+        - Gauss-Newton Method
+            - d2L/d2x = gra2f+d(dC/dxTlam)/dx this term is expensive to compute
+            - we often drop the 2 nd constraint curvature term
+            - called Gauss-Newton
+            - slightly slower convergence than full Newton (more iteration) but Iterations are cheaper
+        - Example
+            - start at [-1,-1],[-3,2] full Newton gets stuck Gauss_Newton doesn't
+        - Take ways
+            - may still need to regularize d2L/d2x even if H>0
+            - Guass-Newton is often used in practice convergence sitll fast
+        - Inequality Constraints
+            - min x f(x) s.t. C(x)<=0
+            - we will just look at inequalities for
+            - first-order necessary condition
+                - df/dx should be 0 in free direction
+            - kkt condition
+                - gra f + dc/dx*lam=0 :stationarity
+                - c(x)<0 :primal feasibility
+                - lam>=0 :dual feasibility
+                - lamT*C(x)=0 :complementarity
+            - Intuition
+                - if constraint is "active" C(x)=0 ->lam>0
+                - if constraint is inactive C(x)<0->lam=0
+                - complementary on/off switches
+- optimization(下)
+    - last time
+        - Line Search (Armijo)
+        - Equality + Inequality
+        - KKT conditions
+    - Algorithms for constrained optimization
+        - Inequality -Constrained Minimization
+            - minx f(x) s.t. c(x)<=0
+        - KKT conditions
+            - graf +dC/dxTlam=0 (stationarity)
+            - C(x)<=0 (primal feasibility)
+            - lam >=0 (dual feasibility)
+            - lam * C(x)=0 (complementarity) Hadamard (elementary) product
+            - pC/px acts like a penalty to make sure the sign is consistent (makes cost worse for C(x) infeasibility)
+        - optimization Algorithm(approximiation kkt)
+            - Active-set Method
+                - guess active/inactive constraint
+                - solve equality-constrained problem
+                - used when you have a good heuristic for active set
+            - Barrier/Interior-Point
+                - Replace inequalities with barrier function in objective:
+                    - minx f(x) s.t. C(x) <=0 ->minx f(x) -1/rho log(-C(x))
+                - gold standard for convex problems
+            - Penalty method
+                - Replace constraints with penalty term that penalizes vialation
+                    - min f(x) s.t. C(x)<=0 ->min x f(x) +rho/2(max(C(x),0)^2
+                    - easy to implement
+                    - has issue with numerical ill-conditioning
+                    - can't achieve high accuracy
+    - Augumented Lagrangian Method
+        - add lagrange multiplier estimate to penalty method:
+            - minx f(x) + lamTC(x) + rho/2[max(0,C(x))]^2
+            - update lam by offloading penalty term into lam at each iteration
+            - pf/px+lampc/px+rhopC/px=0 ->lam = lam+rho (only for active constraints)
+        - Repeat until convergence:
+            - 1) minx Lr(x,lam)
+            - 2) lam<- max(0,lam+rho*ineq) clamping to guarantee lam>=0
+            - rho<-arho a=10
+        - Fixes ill-conditioning of penalty method
+        - converges with finite rho
+        - works well on non-convex problems. We can use another penalty to solve the quality-constraint problem
+    - Quadratic program
+        - minx 1/2xTQx+qTx, Q>0 , s.t. Ax<=b, Cx=d
+        - super useful in control
+        - can be solved very fast (kHz)
+        - Example
+            - try with penalty, full AL, just lam updates
+    - more on regularization + line search
+        - given min f(x) s.t. C(x)=0
+        - we might like to turn this into
+            - min fx+Pinf(C(x)) where Pinf(C(x)) is 0 when C(x)=0 otherwise inf
+            - practically terribly, but we can get the same effect by solving :
+                - minx max lam f(x)+lamTC(x)
+                - whenever C(x)!=0,inner max problem blows up
+                - similar for inequalities:
+                    - minx max lam>=0 f(x)+lamTC(x)
+        - Interpretation in KKT conditions define a saddle point in (x,lam)
+        - KKT system shoud have dim(x) pos eigenvalues and dim(lam) neg eigenvalues at an optimum
+        - called "qusi definite" [H+bI,CT;C,-bI][dx,dl]=[-dL;-C]
+- 确定性最优控制导论
+    - last time
+        - Constrained optimization
+        - augmented lagrangian
+        - QPs
+        - Regularization
+    - Merit functions + Line Searches
+        - Merit function
+            - how do we do a line search a root finding problem
+                - find x* such that C(x*)=0
+            - Define scalar merit function P(x) that measures distance to solution
+            - Standard choices:
+                - P(x)=1/2C(x)TC(x)
+                - P(x)=norm1(C(x))
+            - Now just do Armijo on P(x)
+                - a=1
+                - while P(x+dx)>P(x)+bagra(P)dx a=thetaa end
+                - x-<x+adx
+            - how about constrained optimization?
+                - minx f(x) C(x)<=0 d(x)=0
+                - hot's of options of merit function
+                    - P(x,lam,miu) = 1/2 norm2(residual(x,lam,u))
+                    - P(x,lam,u) = f(x)+rho*norm1([min(0,C(x)),d(x))
+                    - P(x,lam,u)=Lrho(x,lam,u) (Augmented Lagragian,most cheaper because we have calculated the grad at this point)
+                - Example take Aways:
+                    - Excessive constraint penalties can cause problems
+                    - all methods come with a merit function for free
+    - Control History
+        - 我们很多伟人，比如牛顿，比如伯努里，比如卡尔曼，麦克斯韦，他们都为控制奠定基础。上天有依赖扩展kalman滤波，50-60doing many research 根轨迹，波特图等，他们已经有很多人来计算他们的稳定性，还有扰动，但是RL是没有人研究稳定性，所以还不够成熟，MPC可以完成很多brilient thing
+    - Deterministic Optimal Control
+        - continuous time:
+            - format
+                - minx(t) u(t) J(x(t),u(t))=inttf,to l(x,u)dt lF(xtf): J:cost function l:stage cost lF:terminal cost
+                - s.t. x\dot = f(x,u)
+            - This is an infinite dimensional optimization problem
+            - Solutions are open-loop trajectories
+            - there are a handful of problems with analytic solutions but not many
+            - we will focus on the discrete time dynamics function
+        - Discrete Time:
+            - format
+                - min x1:N u1:N-1 J(x,u)=\sum l(xn,un) + lF(x)
+                - s.t. xn+1 =f(xn,un)
+                - umin<=u<=umax :target limits
+                - C(x)<0 :obstacle safety constraints
+            - This is finite dimension
+            - Samples xn,un,are often called knot points
+            - continous -> discrete time sing integration(e,g, Range-Kutta)
+            - discrete->continous using interpolation
+        - Pontryagin's Minimum Principle
+            - Also called "maximum principle" if you maximize reward
+            - First-order necessary conditions for a deterministic optimal control problem
+            - In discrete time, just KKT conditions
+            - Given:
+                - min x1:N u1:N-1 J(x,u)=\sum l(xn,un) + lF(x)
+                - we can form the Lagrangian
+                    - L = \suml(xn,un) +lamn+1T(f(xn,un)-xn+1)+lF(N)
+                    - This result is usually stated in terms of the "Hamiltonian"
+                        - H(x,u,lam) = l(x,u)+lamf(x,u)
+                    - plug H into L:
+                        - L = H(x1,u1,lam2)+(\sumH(xn,un,lamn+1)-lamTxn)+lF(xN)-lamNxN
+                    - The derivatives w.r.t. x and lamda
+                        - pL/plam = f(xn,un)-xn+1
+                        - pL/xn =
+                        - pL/xN =
+                    - For u we write the min explicitly to handle this problem
+                        - u = argmin H(xn,u,lam) s.t. u belong to U
+                    - In summary
+                        - xn+1 = gra(H,lam)
+                        - lamn = gra(H,x)
+                        - un = argmin H(x,u,lam)
+                        - lamN = plF/pxN
+                    - This can be stated in continuous time:
+                        - x\dot =
+- 线性二次调节器的用法
+    - last time:
+        - merit functions
+        - control history
+        - deterministic optimal control
+        - Pontryagin
+    - LQP Intro
+        - LQR problem
+            - min J=\sum 1/2xnTQx+1/2uTRu+1/2xQx s.t. x = Ax+Bu
+            - Q>=0, R>0
+            - Can locally approximate many nonlinear problems
+            - Computationally tractable
+            - Many extensions, e.g. infinite horizon, stachastic, etc
+            - Time invariant(stablization problem) if An=A,Bn=B,Qn=Q,Rn=R for any time, "time varying " otherwise(tracking problem)
+    - LQR via shooting
+        - xn+1 = gra(H,lam) = Ax+Bu
+        - lamn = gra(H,x) = Qxn+ATlamn+1
+        - lamN = QNxN
+        - un = argmin H(xn,u,lamn+1) = -R-1BTlam
+        - Procedure:
+            - 1)start with an inital guess u1:N-1
+            - 2) simulate/rollout to get x1:N
+            - 3) backward pass to compute lam and delta u
+            - 4) rollout with line seach on delta on deltau
+            - 5) goto 3 until convergence
+        - Example:
+            - double Integrator xdot = [qdot,qdd]=[0,1;0,0][[q,dq] + [0;1]u
+            - think of this as a brick sliding on ice (no friction)
+            - 如果时间长度很长可能导致计算时间很高，实际是梯度消失的问题
+    - LQR as a QP
+        - Assume x1 （initial state） is given (not a decisian variable)
+        - Define z=[u1,x1,u2,x2,...]
+        - Define H = diagl([R1,Q2,R2,Q2...]) such that J = 1/2 zTHz
+        - Define C and d:
+            - [A B-I]*len z = d
+            - L(z,lam) = zTHz+lamT(Cz-d)
+            - KKT condition partial should be 0
+            - [H,C;CT,0][z,lam] = [0;d]
+            - we get the exact solution by solving one linear system!
+        - Example
+            - double integrator
+            - A [[closer]] look at the LQR WP:
+                - the KKT system for LQR is very sparse (lots of zeros) and has lots of structure.
+    - Riccat Recusion
+        - PN = QN Kk = (R+BTPk+1B)-1BTPk+1A Pn = Q+ATPn+1(A-BKn)
+        - This is called the Riccat equation/ recursion
+        - We can solve the QP by doing a backward Riccati recursion followed by a forward rollout to compute x1:N and u1:N
+        - General (dense) QP has complexity O(N3(n3+m3))
+        - Riccati solution is O(N(n3+m3))
+        - Even more important : we now have a feedback policy given any initial condition
+        - 可以看到求得的k的曲线u取决于一个x当前状态，并且发现他越小越接近一个恒定增益，实际上可以只用一个k，就是反馈控制，真的很神奇，我们都不用去选择各种参数，就能猜到他一定可以稳定，因为特征值的norm小于1。
+- 凸模型预测控制
+    - last time
+        - LQR as a QP
+        - Riccati
+        - infinite-horizon
+	- Infinite-Horizon LQR
+		- For time-invariant LQR, K matrices converge to constant values
+		- For stabilization problems we usually use constant K
+		- Backward recursion for P:
+			- $K_n=(R+B^TP_{n+1}B)^{-1}B^TP_{n+1}A$
+			- $P_{n}=Q+A^TP_{n+1}(A-BK_{n})$
+		- Infinite-horizon limit => $P_{n+1}=P_{n}=P_{inf}$
+			- solve as a root-finding /fixed -point problem
+		- Julia/Matlab/Python dare function does this for you
+	- Controllability
+		- how do we know if LQR will work
+		- we already know Q>=0, R>0
+		- For the time-invariant case, there is a simple answer
+		- For any initial state $x_{0},x_{N}$ is given by:
+			- $x_{N}=Ax_{N-1}+Bu_{N-1}$
+			- finally we can gat $\begin{bmatrix}B & AB&A^2B&A^{3}B &\dots &A^NB \end{bmatrix}$$\begin{bmatrix}u_{0}\\\dots\\ u_{N}\end{bmatrix}$
+			- have a solution when rank(C)=n,n=dim(x)
+			- since [[Cayley-Hamilton]] theorem says that $A^N$ can be written in terms of a linear combination of lower powers of A up to n
+			- Therefore adding more time steps/columns to C can't inorease the rank
+			- so we just to have n-1time we can quickly find the u
+	- Dynamic Programming
+		- Bellman's Principle 
+			- Optimal control probelms haave an inherently sequential structure
+			- past control only affect future 
+			- future control can not affect previous state
+			- sub-trajectories of optimal trajectories have to be optimal for appropriately defined sub problems
+			- If this path had lower cost starting at $x_{k}$ would have taken it starting from $x_{0}$
+		-  Dynamic Programming
+			- Bellman Principle suggests starting from the end of the trajectory and working backwards
+			- We've already seen hints of this from Riccati
+			- Define "optimal cost-to-go" or "Value" function
+			- Encodes cost incurred starting from state x at time k if we act optimally
+			- For LQR
+				- $V_{N}(x)=\frac{1}{2}x^TQ_{N}x=\frac{1}{2}x^TP_{N}x$
+				- back up one step and calculate $V_{N-1}(x)$:
+					- $V_{N-1}=\min\limits_{u} \frac{1}{2}u^{T}Ru+V_{N}(A_{N-1}x_{N-1}+Bu_{N-1})$
+					- and then we can find a solution from this probelm u=Kx
+					- then $V_{N-1}=x^{T}P_{N-1}x$
+					- we can still find the Raccati equation again
+				- algorithm
+					- V = xQx
+					- k = N
+					- while k<1:
+						- $V_{k-1}=\min\limits_{u\in U}[l(x,u)+V_{k}(f(x,u))]$
+						- k<-k-1
+					- end
+				- if we know $V_{k}(x)$, the optimal policy is:
+					- $u_{n}(x)=arg\min\limits_{u\in U}[l(x,u)+V_{k+1}f(x,u)]$
+					- DP equations written equivalently in terms of "action-value" or "Q" function
+					- Sn(x,u) = l(x,u) + $V_{n+1}(f(x,u)$
+				- Avoid needing dynamic models Q(x,u)
+			- The Curse
+				- DP is sufficient for global optimum
+				- only tractable for simple problems (LQR, low-dimensional)
+				- V(x) stays [[quadratic]] for LQR but becomes impossible to write analytically even for simple nonlinear problems
+				- Even if we could , min S(x,a) will be non-convex and possibly hard to solve
+				- cost of DP blows up with state dimension due to cost of representing V(x)
+			- why do we care
+				- approximate DP with a function approximate for V(x) or S(x,u) is very powerful
+				- Forms basis of lots of modern RL
+				- DP generalizes to stochastic problems (just wrap everything in expectation) Pantryagin does not
+			- Finally : what are the Lagrange Multipliers?
+				- Recall Ricati derivation from QP
+					- $\lambda_{n}=P_{n}x_{n}$
+				- From DP:
+					- V(x)= $\frac{1}{2}x^{T}Px$
+					- $\lambda_{n}=\nabla_{x}V_{n}(x)$
+				- Dynamics multiplies are cost-togo gradients
+				- Carriers over
+-  convex MPC
+	- last time
+		- infinite-Horizon LQR
+		- Controllability
+		- Dynamic Programming
+	- convexity background
+	- convex MPC 
+	- convex Model-Predictive Control
+		- LQR is very powerful but we often need to reason about constraints
+		- often the these are simple (e,g, torque limits)
+		- constraints break the Riccati solution, but we can still solve the QP online
+		- convex MPC has gotten popular as computers have gotten faster
+	- Backgound:convexity
+		- convex set: you can get two point (e,g, ball cone box)
+			- A line connecting any two points in the set is also contained in the set.
+			- Standard Examples:
+				- Linear Subspace (Ax=6)
+				- half space/box/polytopes (Ax<=6)
+				- Ellipsoids ($x^{T}Px\leq_{}1,p>0$)
+				- Cones ($\begin{Vmatrix}x_{2:n}\end{Vmatrix}\leq x_{1}$ second order cone)
+		- convex function
+			- A convex f(x):$R^n\to R$ who's epigraph is a convex set:
+			- Standard examples:
+				- Linear f(x)=$c^{T}x$
+				- Quadratic f(x) = $\frac{1}{2}x^{T}Qx+q^{T}x,Q\geq0$
+				- Norms f(x) = $\begin{vmatrix}x\end{vmatrix}$ any norm
+		- Convex optimization problem:
+			- minimize a convex function over a convex set
+			- Standard Examples:
+				- Linear Program (LP): Linear f(x),linear c(x)
+				- Quadratic Program (QP): Quadratic f(x),
+				- Quadratically constrained QP(QCQP): ellipsoid c(x)
+				- second-drder cone Program (SOCP): linearf(x), cone c(x)
+			- Convex optimization problems don't have any many local optimum that satisfy KKT
+				- If you find a local KKT solution, you have the answer
+			- Practically , Newton's method converges really fast and reliably (5-10 iterations max)
+				- Can bound solution time for real-time control
+		- Convex MPC
+			- Think "constrained LQR"
+			- Remember from DP, if we  have a cost-to-go function V(x),we can u by solving a one-step problem:
+				- $u_{n}=arg\min\limits_{u}l(x,u)+V_{k+1}(f(x_{n},u))$
+				- $arg\min\limits_{u} \frac{1}{2}u^{T}Ru+(Ax_{n}+Bu_{n})^{T}P_{n+1}(Ax_{n}+Bu_{n})$
+				- We can add constraint s an u to this one-step problem but this will perform poorly because V(x) was computed without constraint
+				- There's no reason I can't add more steps to the one-step problem:
+					- $\min\limits_{x_{1:h}u_{1:h}}\sum \frac{1}{2}x_{n}^{T}Qx_{n}+ \frac{1}{2}u_{n}^{T}Ru_{n}+x_{H}^{T}P_{H}x_{H}$
+			- H<<N is called "Horizon"
+			- With no additional constraints, MPC("receeding-horizon") exactly matches LQR for any H
+			- Intuition: explicit constrained optimization over first H steps gets the stable close enough to the reference that the constraints are no longer active and the LQR cost-to-go is valid farther into the future.
+			- In general
+				- A good approximation of V(x) is important for good performance
+				- Better V(x)=> shorter horizon
+				- longer H=> less reliance on V(x)
+			- Example:
+				- Planar Quadrotor
+				- We can directly see that with constraint OSQP, It can work really well
+- 非线性轨迹优化
+	- last time
+		- convex optimization overview
+			- do stehpen boy book really good
+		- convex MPC
+	- Convex MPC Examples
+		- Rocket loading
+		- Thrust vector constraints are cone
+		- SpaceX + JPL Mars landing use SOCP-based MPC with linearized dynamics
+		- Legged Robots
+			- Contact forces must obey friction cone constraint
+			- cone is often approximated as a pyramid so the constraint is linear( Ax<=b)
+			- MIT cheetah and other quadrupeds use QP based MPC with linearized dynamics.
+	- Nonlinear Trajectory Optimization
+		- linear stuff often works well, so use if  you can
+		- Nonlinear dynamics make MPC problem non-convex => no convergence guarantees
+		- can work well in practice with effort
+		- Nonlinear Traj Opt Problem,function is nonlinear Constraint is nonlinear
+			- $\min\limits_{x_{1:N}u_{1:N-1}} J=\sum_{n=1}^{N-1} l_{n}(x_{n},u_{n})+l_{n}(x_{n})$
+			- s.t. $x_{n+1}=f(x_{n},u_{n}),x_{n}\in X_{n} u_{n}\in U_{n}$
+		- Usually assume costs  + constraints are $C^{2}$(continuous $2^{nd}$ derivatives)
+	- Differential Dynamic Programming
+		- Nonlinear Traj opt method based on approximate DP
+		- Use a 2nd-order Taylor expansion of cost-go-go in DP
+		- Very fast convergence is possible
+		- Can stop early in real-time applications
+	- Cost-to-go expansion:
+		- $V_{n}(x+\Delta x)\approx V_{n}(x)+p_{n}^{T}\Delta x+\frac{1}{2}\Delta x^{T}P_{n}\Delta x$
+		- pn is the gradient part of terminal  $p_{n}=\nabla_{x}l_{N}(x)$ $P_{N}$ = $\nabla^{2}_{x}l_{N}(x)$
+		- Action-value function expansion:
+			- $S_{n}(x+\Delta x,u+\Delta u)\approx S_{n}(x,u)+g^{T}\begin{bmatrix}\Delta x\\\Delta u\end{bmatrix} +\frac{1}{2}\Delta u^{T}G\Delta u$
+			- $V_{k-1}=\min\limits_{\Delta u}S(x+\Delta x,u+\Delta u)$
+			- $\nabla_{\Delta u}=g_{u}+G_{uu}\Delta u+G_{ux}\Delta x$
+			- $\Delta u=-G_{uv}^{-1}g_{u}-G_{uu}^{-1}G_{ux}\Delta x$
+			- $=-d_{n-1}-K\Delta x$ where d is feed-forward term and K is feedback term![[Pasted image 20250319161428.png]]
+			- take gradient of $\Delta u$=0 then get $\Delta u$
+			- finally we can get $P_{n-1}$ and $p_{n-1}$ with respect to G and g
+		- Need some more math to calculate g and G
+			- Matrix Calculus 
+				- given $f(x):R^n\to R^m$, look at $2^{nd}$order Taylor expansion
+				- if m=1
+					- $f(x+\Delta x)\approx f(x)+\frac{ \partial f }{ \partial x }\Delta x+ \frac{1}{2}\Delta x^{T}\frac{ \partial^{2} f }{ \partial x^{2} }\Delta x$
+				- for m>1 $\frac{ \partial^{2} f }{ \partial x^{2} }$is a 3rd -rank tensor think of a 3D math ix We need some tricks to work with these
+				- Kronecker Product:
+				- $A \otimes B = \begin{bmatrix} a_{11}B & a_{12}B & \cdots & a_{1n}B \\ a_{21}B & a_{22}B & \cdots & a_{2n}B \\ \vdots & \vdots & \ddots & \vdots \\ a_{m1}B & a_{m2}B & \cdots & a_{mn}B\end{bmatrix}$
+				- vectorization Perator
+					- A = $\begin{bmatrix}A_{1} & A_{2} & A_{3} & \cdots & A_{n}\end{bmatrix}$
+					- vec(A)=$\begin{bmatrix}A_{1} \\ A_{2} \\ \vdots \\ A_{m}\end{bmatrix}$
+				- The "vec trick"
+					- $\text{vec(ABC)}=(C^{T}\otimes A)\text{vec}(B)$
+					- vec(AB)=$(B^{T}\otimes I)\text{vec(A)}=(I\otimes A)vec{(B)}$
+				- If we want to diff a matrix w.r.t. a vector , vectorize the matrix
+					- $\frac{ \partial A(x) }{ \partial x }=\frac{ {\partial}vec(A) }{ \partial x }$
+				-  Back to Taylor expansion of f(x)
+					- f(x$+\Delta x$)$\approx f(x)+ \frac{ \partial f }{ \partial x }\Delta x+ \frac{1}{2}(\Delta x^{T}\otimes I)\frac{ \partial^{2} f }{ \partial x^{2} }\Delta x$
+					- where $\frac{ \partial f }{ \partial x }$=A, $\frac{ \partial^{2} f }{ \partial x^{2} }$=$\frac{ \partial \text{vec(A)} }{ \partial x }$
+				- Some times we need to diff through a transpose:
+					- $\frac{ \partial A(x)^{T}B }{ \partial x }=(B^{T}\otimes I)T\frac{ \partial A }{ \partial x }$
+					- Tvec(A)=vec($A^{T}$)
+			- Action-Value Function Derivatives:
+				- $S_{k}(x,u)=l_{k}(x,u)+V_{k+1}(f(x,u))$
+				- ![[Pasted image 20250311115222.png]]
+- 微分动态规划
+	- last time
+		- convex MPC Examples
+		- Nonlinear Traj Opt
+		- DDP/iLQR
+	- DDP details + extensions
+		- DDP Recap:
+			- Solve the unconstrained Traj Opt problem:
+				- min J=l(x,u)+$l_{N}(x_{N})$
+				- s.t. $x_{n+1}=f(x_{n},u_{n})$
+			- Backward Pass:
+				- ![[Pasted image 20250312162039.png]]
+			- forward rollout
+				- ![[Pasted image 20250312165231.png]]
+				- then line search to find whether we can get a good J smaller than before 
+				- while J<J_old-b*$\nabla J$
+			- Example
+				- carpole + acrobot swing up
+				- DDP can converge in fewer iterations but iLQR often wins in wall-clock time
+				- Problems are nonconvex can land in different local optima depending on initial guess
+			- Regularization
+				- Just like standard Newton, V(x) and  S(x,u) Hessians can become indefinite in backward pass
+				- Regularization is definitely necessary for DDP, often a good idea with iLQR as well
+				- Many options for regularizing
+					- Add a multiple of identity to $\nabla^{2}S(x,u)$
+					- Regularize $P_{n}$ or $G_{n}$ as needed in the backward pass
+					- Regularize $G_{uu}=\nabla^{2}_{uu}S(x,u)$ (this is the only matrix you hace to invert)
+					- this last one is good for iLQR but not DDP
+					- Regularizztion should not be required for iLQR but be necessary due to floating-point error
+	- DDP Notes
+		- can be very fast(iterations +wall-clock)
+		- one of the most efficient methods due to exploitation of DP structure
+		- Always dynamically feasible due to forward roll out can always execute on robot
+		- Comes with TVLQR tracking controller for free
+			- can be very effective for online use
+		- Does not natively handle constraints
+		- Does not support infeasible initial guess for state trajectory due to forward rollout Bad for "maze" or "buy-trap" problems无法处理很多障碍物的情况
+		- can suffer from numerical ill-conditioning on long trajectories
+	- Constraints
+		- many options depending on type of constraint
+		- Torque limits can be handled with a " squashing function"
+			- e.g. tanh(u)
+		- Effective but adds nonlinearity and may need were iterations
+		- Better option: solve box-constrained QP in the bakward pass:
+			- $\nabla u=arg\min\limits_{\nabla u}S(x+\Delta x,u+\Delta u)$
+		- state constraints are harder often penalties are added to cost function can cause ill-conditioning
+		- Better option: Wrap entire DDP algorithm in an Augmented lagrangian method
+	- Free /minimum time problems
+- 直接轨迹优化
+	- last time
+		- DDP details
+		- constraint
+	- Minimun/Free-time problems
+		- minimun/free-time problems
+			- $\min\limits_{u(t)x(t)Tf} J=\int 1 \, dx$
+			- s.t. $\dot{x}=f(x,u) X(T_{f})=X_{goal}$
+			- $u_{min}\leq u(t)\leq U_{max}$
+		- We don't want to change the number of trat points
+		- Make h (time step) from RK a control input 
+			- $x_{k+1}=f(_{RK}(x_{k},u_{k})),u=\begin{bmatrix}u_{k} \\ h_{k}\end{bmatrix}$
+		- Also want to scale the cost by h e.g.
+			- $j(x,u)=\sum_{k=1}^{N-1}h_{k}l(x_{k},u_{k})+l_{N}(x_{k})$
+			- 不用这个hk直接作为变量，因为他会打乱Jacobian的结构，无法使用Ricatti
+			- if you care about going fast it is really good
+		- Always nonlinear/nonconvex even if the dynamics are linear
+		- Requires constraints on h Otherwise the solver can cheat physics by making h very large or negative to exploit discretization errors.
+	- Direct Trajectory Optimization
+		- Basic strategy:Discretize / "transcribe" continuous-time optimal control problem into a nonlinear program (NLP)
+			- standart NLP: $\min\limits_{x}f(x) s.t. C(x)=0 d(x)\leq_{0}$
+			- where f is cost function, C is dynamics constraints, other constraints
+			- all fucntions assumed $C^{2}$ smooth
+			- Lots of off-the-shelf solves for large-scale NLP
+			- Most common: IPOPT (free,interior point optimization) SNOPT (commerial,sparse nonlinear problem) KNITRO(commerial,both can work)
+	- Sequential Quadratic Programming
+		- startegy: Use 2nd-ord Taylor expansion of the lagrangian and linerize C(x),d(x) to approximate the NLP as a QP:
+			- $\min\limits_{\nabla x}f(x)+g^{T}\Delta x+\frac{1}{2}\Delta x^{T}H\Delta x$
+			- s.t. $C(x)+C\Delta x=0$ $d(x)+D\Delta x\leq_{0}$
+			- where $H=\frac{ \partial^{2} L }{ \partial x^{2} },g=\frac{ \partial L }{ \partial x },C=\frac{ \partial f  }{ \partial x },D=\frac{ \partial d }{ \partial x }$
+			- $L(x,\lambda,\mu)=f(x)+\lambda ^{T}C(x)+\mu ^{T}d(x)$
+			- solve QP to compute primal-dual serch direction:
+				- $\Delta z=\begin{bmatrix}\Delta x \\ \Delta\lambda \\ \Delta \mu \end{bmatrix}$
+			- perform line search with merit function
+			- with only quality constraints, reduces to Newton's method on KKT conditions
+		- Think of SSQP as a generalization of Newton to handle inequalities
+		- Can use any QP solver for sub-problems but good implementations typically warm start using Previous QP iteration
+		- For good performance on Traj opt problems, taking advantage of sparsity in KKT systems is crucial
+		- If inequalities are convex (e,g, conic) can generalize SQP to SCP (sequential convex programming) where inequalities are passed directly to the sub-problem solver
+		- SCP is still an active research area
+	- Direct collocation
+		- So far we 've used explicit RK methods:
+			- $\dot{x}=f(x,u)\to x_{k+1}=f(x_k,u_k)$
+			- This makes sense if you've doing rollout
+			- However in a direct method we've just enforcing dynamics as quality constraints between knot points
+				- implicit integration is $c(x)=C(x_{k+1},u_{k+1},x_{k},u_{k})$
+		- Colocation methods represent trajectories as polynomial splines and enforce dynamics on spline derivatives
+		- Classic DIRCOL algorithm uses cubic splines for states and piecewise linear interpolation for u(t)
+		- Very high-order polynomials are sometimes used (e,g, spacecraft trajectories) but not common
+		- DIRCOL Spline Approximations:
+			- x(t)=$c_{0}+c_{1}t+c_{2}t^{2}+c_{3}t^{3}$
+			- we first solve a function to simulate the dynamics by c
+			- evaluate at $t_{k+\frac{1}{2}}$ then we can use spline to simulate dynamics
+		- not that only x,u are decision variables
+		- called hermite simpsen integration
+		- requires fewer dynamics calls than explicit RK3
+		- Explicit RK3:
+			- 3 dynamics evals per time step
+		- Hermite Simpson:
+			- these get re-used at adjacent step
+			- only 2 dynamics calls per time step
+		- Since dynamics calls often dominate total compute cost, this is a
+- 处理三维旋转问题
+	- last time
+		- free/minimum time 
+		- dircol
+	- recap
+		- linear
+			- no constraints
+				- tracking : tvlqr
+				- stablization: ihlqr
+			- constraints
+				- linear:QP
+				- conic:SCOP
+		- nonlinear trajectory optimization planning
+			- DIRCOL
+				- only respects dynamics at convergence
+				- can use infeasible guess
+				- can handle arbitrary constraint
+				- tracking controller must be designed separately
+				- Typically not as fast 
+				- Difficult to implement large-scale SQP solver
+				- numerically robust
+			- DDP
+				- Always dynamically feasible
+				- can only guess controls
+				- hard to handle constraints
+				- TVLQR tracking controller is free
+				- very fast (local) convergence
+				- easy to implemented on embedded system
+				- has issues with ill-conditioning
+			- DDP is often a good choice for online/real-time applications where speed is critical and constraint tolerance is not critical
+			- DIRCOL is often a good choice for offline trajectory design, especially over long horizons and/or with complex constraints.
+	- Attitude
+		- many robotic systems undergo large rotations(quadrotors,airplanes, spacecraft, underwater vehicle, legged robots)
+		- Naive angle-based parameterizations (Eular angle)
+		- have singularities that cause failures and /or require hacks
+		-  rotation matrices and quaternions are singularity free but optimizing over them requires some extra tricks
+		- what is attitude
+			- rotation from body frame to world frame
+			- 3DOF, but there is no globally nonsingular 3-parameter attitude representation
+			- Xn=n1;n2;n3x=b1,b2,b3x
+			- 所以由于分量相互正交，所以是正交矩阵，然后因为他们了的变换保持右手定则，不是反射，所以det=1
+				- 所以称为特殊正交矩阵
+	- Kinematics(how do I integrate a gyro)
+		- $^{N} x =Q(t)x_{B}$
+		- $\dot{x}_{N}=w_{N}\times x_{N}$
+		- $\dot{x}_{N}=Q(w_{B}\times x_{B})$
+		- $\dot{x}_{N}=\dot{Q}x_{B}+Q\dot{x}_{B}$
+			- where $\dot{x}_{B}$ is zero all the time because it is a fixed point in body frame
+		- $\dot{x}_{N}=Q(w_{B}\times x_{B})=\dot{Q}x_{B}$
+			- where Q is b to N and w is body frame gyro data
+		- we could do dynamics with rotation matrices in out state, but has a lot of redundancy
+		- Quaternions are more compact/efficient
+		- Define axis of rotation (unit vector) a
+		- Define angle of rotation (scalar, radians) $\theta$
+			- $\phi=a\theta,\begin{Vmatrix}\phi\end{Vmatrix}=\theta, \frac{\phi}{\begin{Vmatrix}\phi\end{Vmatrix}}=a$
+		- In terms of phi, we can define quaternion
+			- valid rotations correspond to unit quaternion
+			- q and -q correspond to the same rotation called double cover
+			- operations on quaternions are analogous to rotation matrices
+			- Quaternion Multiplication (can be written as L(q1)q2 or R(q2)q1)
+				- $\begin{bmatrix}s_{1}s_{2}-v_{1}^{T}v_{2} \\ s_{1}v_{2}+s_{2}v_{1}+v_{1}\times v_{2}\end{bmatrix}$
+			- Quaternion Conjugate
+				- $q^{\dagger}$
+- optimization with quaternion
+	- last time
+		- deterministic OC summary
+		- LQR sv MPC
+		- DDP vs DIRCOL
+		- Quaternion
+	- Optimization with Quaternions
+		- Quaternion Recap:
+			- 4d unit vectors
+			- multiplication rule
+				- $q_{1}*q_{2}\begin{bmatrix}s_{1}s_{2}-v_{1}^{T}v_{2} \\ s_{1}v_{2}+s_{2}v_{1}+v_{1}\times v_{2}\end{bmatrix}$
+			- conjugate
+				- $q^{\dagger}=\begin{bmatrix}s \\ -v\end{bmatrix}$
+			- Identity
+				- $q_{I}=\begin{bmatrix}1 \\ 0\end{bmatrix}$
+			- "hat map" for quaternions(skew symmetric)
+				- $\hat{w}=\begin{bmatrix}0 & -w_{3} & w_{2} \\ w_{3} & 0 & -w_{1} \\ -w_{2} & w_{1} & 0\end{bmatrix}$
+				- $\hat{w}=\begin{bmatrix}0 \\ w\end{bmatrix}$
+		- q derivatives
+			- q lives on a shpere in $R^{4}$
+			- $\dot{q}$lives in the tangent plane at q
+			-  $\dot{q}\in \mathbb{R}^{4},w\in \mathbb{R}^{3},\dot{q}=\frac{1}{2}L(q)Hw$
+				- w is always in the identity tangent plane so we need to rotate it into tangent plane at q by q
+			- analogy 2D we have $v=Q\theta$
+		- differential quaternions
+			- two key facts
+				- derivatives are really 3D tangent vectors
+				- Roations compose by multiplication, not addition(they cannot commute)
+			- infinitesimal component
+				- $\delta q=\begin{bmatrix}\cos \left( \frac{\theta}{2} \right) \\ a\sin\left( \frac{\theta}{2} \right)\end{bmatrix}\approx \begin{bmatrix}1 \\ 0\end{bmatrix}+\frac{1}{2}H\phi$
+			- compose with q
+				- $q^\prime=q*\delta q=L(q)\left( q_{I}+\frac{1}{2}H\phi \right)=q+\frac{1}{2}L(q)H\phi$
+				- here we call $L(q)H=G(q)$ is Attitude Jacobian
+				- note that even we choose different way to represent the $\phi$ They all linearize the same jacobian (up  to permutation/scaling)
+			- we'll use the vector part of q in class
+			- This lets us differentiate w.r.t. quaternions by inserting G(q) in the right places:
+				- $f(q):\mathcal{H}\to \mathbb{R}$ where H is quaternions
+					- $\nabla f=\frac{ \partial f }{ \partial q }\frac{ \partial q }{ \partial \phi }=\frac{ \partial f }{ \partial x }G(q)$
+				- $f(q):\mathcal{H}\to \mathcal{H}$ Jacobian of a quaternion-valued
+					- $\phi ^\prime=\left[ G(f(q))^{T}\frac{ \partial f }{ \partial x }G(q) \right]\phi$
+					- where $[ G(f(q))^{T}\frac{ \partial f }{ \partial x }G(q)]$ is $\nabla f\in \mathbb{R}^{3\times 3}$
+				- hessian matrix of f(q)
+					- $\nabla^{2}f=G(q)^{T}\frac{ \partial^{2} f }{ \partial x^{2} }G(q)+I\left( \frac{ \partial f }{ \partial x }q \right)$
+				- Now we can do Newton 's method like SQP EDP
+					- example Pose Estimation
+						- Given a bunch of vectors to Known landmarks in the environment, determine robot's attitude
+						- called "Wahba's Problem"
+						- $\min\limits_{q}J(q)=\sum_{k=1}^{m}\begin{Vmatrix}x_{N}-Q(q)x_{B}\end{Vmatrix}^{2}_{2}=\begin{Vmatrix}r(q)\end{Vmatrix}^{2}_{2}$
+						-  background Gauss-Newton for Least-square:
+							- $\min\limits_{x}J(x)=\frac{1}{2}\begin{Vmatrix}r(x)\end{Vmatrix}^{2}_{2}$
+							- $\frac{ \partial J }{ \partial x }=r^{T}(x)\frac{ \partial r }{ \partial x }$
+							- $\frac{ \partial^{2} J }{ \partial x^{2} }=\left( \frac{ \partial r }{ \partial x } \right)^{T}\left( \frac{ \partial r }{ \partial x } \right) + (I\otimes r(x)^{T})\frac{ \partial^{2} vec(r) }{ \partial x^{2} }$
+							- $\phi  ^\prime =-H^{-1}\nabla f$
+							- ![[Pasted image 20250321154308.png]]
+- quaternion LQR Duadrotor control hybrid sstems for contact
+	- LQR with Quaternions
+		- Naively linearizing a system with a qouternion skew results in an unconrollable linear system
+		- we'll apply our quaternion differentiation tricks LQR to make this work
+		- Given a reference $\bar{x}_{n},\bar{u}_{n}$ for a discrete -time system f(x,u)
+			- because there is some control can drive the states to origin but if we use quaternion we will not drive it yo origin all the way since it exist in sphere
+			- ![[Pasted image 20250323141743.png]] this is a linearized dynamics squished from the quaternion to phi
+			- Once we have these "reduced" Jacobians An,Bn, A=$E^{T}AE,B=E^{T}B$
+			- given a $x_{n}$ we can calculate $\Delta x$, $u_{n}=\bar{u}_{n}-K_{n}\Delta x_{n}$
+			- compute the $\delta q=\bar{q}^{\dagger}*q=L^{T}(\bar{q})q$
+			- u=$\bar{u}-K\phi(\delta q)$
+		- 3D Quadrotor
+			- state $r^{N},q^{NB},v^{B},w^{B}$
+			- kinematics
+				- $\dot{r}=v^{N}=Qv^{B}$
+				-  $\dot{q}=\frac{1}{2}G(q)w^{B}$
+				- ![[Pasted image 20250323150935.png]]  ![[Pasted image 20250323151055.png]] 
+				- ![[Pasted image 20250323151330.png]]
+			- if we take the quaternion with such kind of stuff we can directly calculate a more suitable and robust control at last
+			- therefore, we can get a good control better than other like just easy theta or other stuff.
+			- because we do some normalization during the process that add nonlinear information into it.
+- L16: contact dynamics hybrid systems modeling, trajOpt for legged system
+	- denmaics
+		- bouncing ball is has a really smooth ODE
+		- if ball hits it will have a discontinuous velocity so no f=ma
+			- two options to deal with
+				- 1.event-based/hybrid formulation: Intergrate ODE while checking for contact events using a guard function (e.g. z>=0) when contact happens execute "jump map" that models discontinuity then continue integrating ODE
+				- 2. time-stepping/contact-implicit formulation:solve a constrained optimication problem at each time step that enforces no interpenetration between objects (phi(x)>0)by solving contact forces jiontly with state 
+			- both are widely used and have pros/cons
+			- In control, hybrid formulation is easy to implement with standard algorithms (eg. DIRCOL)
+				- very successful in locomotion
+			- contact-implicit method doesn't need mode sequence  pre-specified but the optimization problems are much harder
+				- example: pybullet gazebo some simluation use contact-implicit
+				- but it cannot integrate in high order integration
+				- difficult to insert in other method since kkt is un smooth function
+			- hybrid method
+				- widely used in control
+	- hybrid trajopt for legged robots:
+		- one-legsed hopper
+			- $x=\begin{bmatrix}r_{b} \\ r_{f} \\ v_{b} \\ v_{f}\end{bmatrix},u=\begin{bmatrix}F \\ \tau\end{bmatrix}$
+			- defin jump 
+- L17：Review Convex vs Non-convex Optimization Iterative learning control
+	- convex vs Non-Convex Optimization:
+		- convex optimization
+			- Minimize a convex objective function convex set (convex constraints)
+			- Generally means linear equalities and linear and linear and/or conic inequalitiecs
+		- Non-Convex Optimization
+			- Everything else
+				- convex do not need good initial point
+				- bounded solution times
+				- guarantee global optima
+				- can find infeasibility
+		- What happens when our model has errors
+			- models are approximate
+			- simpler models are often preferred even if they're less a accurate
+			- feedback (e.g. LQR/MPC) can often compensate for model errors
+			- sometimes that isn't enough (e.g. very tight constraints, performance, safety)
+	- Several Options:
+		- 1.Parameter Estimation: Classical "System ID"/ "grey box" modeling, Fit e.g. masses in your model from data
+			- very sample efficient
+			- Generalizes well
+			- Assumes model structure
+		- 2.Learn Model： fit a generic function approximator to the full dynamics or residual classical "black-box" modeling / System ID
+			- Doesn't assume model structure
+			- Generalizes
+			- Not sample efficient requires lots of data
+		- 3. learn a plicy: Standard RL approach Optimize a function approximation for control policy
+			- Makes few assumptions
+			- doesn't generalize
+			- not sample efficient Requires lots of "rollouts"
+		- 4.Improve a trajectory: Assume we have a reference computed with a nominal model
+			- Improve it with data from the real system
+				- Makes few assumptions
+				- Assume a decent prior model
+				- doesn't generalize (task specific)
+				- very sample efficient
+			- 3.4. is direct adaptive control /model free RL
+			- 1.2. is indirect adaptive control / model-based RL
+	- Iterative Learning Control(ILC)
+		- updating the policy $u=\bar{u}+K(\Delta x)$
+		- Can think of this as SQP where we get the RHS vector from a rollout on the real system
+		- algorithm
+			- first we get a trajectory $\bar{x},\bar{u}$
+			- while x-xopt>tol
+				- dx,du=argminJ(dx,du)
+					- s.t. dx+1=Adx+Bdu
+					- u+du inside a bound
+				- get u = u+du
+			- why it can work because this work has convergence guarantee bu if ||f+Jdx||<$\eta f$
+				- where $\eta$ less than1
+			- it works well in a repeated environment so it has really bad robustness
+- L18: Stochastic Optimal Control
+	- last time: Iterative learning Control
+	- Stochastic Control:
+		- So far we have assumed we know the system's state perfectly
+		- we all have are noisy measurements of quantities related to the state
+			- $y=g(x)$
+		- Stochastic Optimal Control Problem
+			- $\min\limits_{u}E[J(x,u)]$
+			- In principle, can solve with DP
+			- Very hard in general
+		- LQG
+			- Special case we can solve in closed form
+			- Linear Dynamics Quadratic Cost Gaussian Noise
+			- Dynamics
+				- $x_{n+1}=Ax_{n}+Bu_{n}+w_{n}$
+				- $y_{n}=Cx_{n}+v_{n}$
+				- w and v drown from Gaussian Distribution (0 means)
+			- Multivariate Gaussian
+				- ![[Pasted image 20250326171027.png]]
+				- "uncorrelated"->$E[(x-\hat{x})(y-\hat{y})]=0$
+			- Noise sample drown at time K has nothing to do with sate (or control) at time K, xn depends on wk-1 (and all past w) but not on wk or future w
+				- uncorrelated -> cross-correlation is 0
+			- Noise terms have no impact on the controller design" (you just get a higher cost)
+			- Certainty-Equivalence Principle
+				- The optimal LQG controller is just LQR with x replaced by E$[x]$
+			- Separation Principle
+				- For LQG we can design an optimal feedback controller and an optimal estimator separately and then hook them together. The resulting feedback policy is optimal.
+			- Neither of these holds in general but are still frequently used in practice to design sub-optimal policies.
+		- optimal state Estimation
+			- what should I try to optimize
+				- Maximum a posterior (MAP)
+					- $argmax p(x|y)$
+					- Minimum mean-squared error (MMSE)
+						- argmin $E[(x-\hat{x})(x-\hat{x})^{T}]$
+- L19：optimal estimation,finish LQG Duality
+	- certainty equivalence, separation principle
+	- optimal state Estimation
+		- what should i optimize
+			- Maximum a-posterior (MAP)
+				- argmax p(x|y) probability of state given measurement
+			- Minimum mean squared error (MMSE)
+				- armgmin $E[(x-\hat{x})^{T}(x-\hat{x})]$
+				- trace trick
+					- tr(AB)=tr(BA)->E=tr($\sigma$)
+				- These are the same for Gaussian
+		- Kalman Filter
+			- Recursive linear MMSE estimator
+			- Assume on estimate of the state that includes all measuement up to the current time:
+				- $\hat{x}_{k|k}=E[x_{k}|y_{1:k}]$
+				- $\Sigma_{k|k}=E[(x_{k}-\hat{x}_{k})\dots ^{T}]$
+			- Prediction
+				- - $\hat{x}_{k+1|k}=E[Ax_{k}+Bx_{k}+w_{k}|y_{1:k}]$
+				- $\Sigma_{k+1|k}=AE[(x_{k}-\hat{x}_{k})\dots ^{T}]A^{T}+E[w_{k}w_{k}^{T}]$
+					- because uk is same and by definition and uncorrelated(not true temperature and light will affect the noise) u and x
+			- Define innovation
+				- $Z_{k+1}=Cx_{k+1}+v_{k+1}-C\hat{x}_{k+1}$
+				- innovation covariance
+					- $S_{k+1}=C\Sigma_{k+1|k}C^{T}+V$
+				- $\hat{x}_{k+1|k+1}=\hat{x}_{k+1|k}+L_{k+1}(Z_{k+1})$
+				- MMSE $tr(\Sigma_{k+1|k+1})$
+				- we just need to set $\frac{ \partial tr }{ \partial L }=0$
+				- L=$\Sigma_{k+1|k}C^{T}S_{k+1}^{-1}$
+			- whole algorithm
+				- start with x0\0,$\Sigma_{0|0}$,W,V,A,B
+				- recursive
+					- predict
+						- xk+1=Axk+Buk
+						- $\Sigma_{k+1}$=A$\Sigma A^{T}$+W
+					- Inovation
+						- Z=y-Cxk+1
+						- S=CZCt+V
+					- calculate L
+						- L = $\Sigma$CtS-1
+					- update
+						- xk+1=xK+1+LZ
+						- $\Sigma=(I-LC)S(I-LC)^{T}+LVL^{T}$
+				- we will see that L and sigma will converge to a constant since they will have a measurement and dynamics models equivalent
+		- Duality+Trajectory Optimization
+			- we can find a almost the same LQR problem to find the x and wn so that x is as the same as the state optimization.
+			- which means they have some duality.
+- L20：Rocket soft landing
+	- Go from some initial state x to some final position rf with zf=0 and vf=0
+		- Minimize some combination of fuel consumption and landing position error
+		- Decoupled Control Loop:
+			- high-level Position Controller: Uses a point-mass model Reasons about safety, thrust and fuel.Generates accelerate very low frequency
+			- attitude is high frequncy
+		- Dynamics of Rocket
+			- fluid stuff: pendulum to approximation
+			- Flexible modes: notch filter to the attitude controller
+			- Lots of model uncertainty: Hinfinity linear robust control
+		- Background: Convex Relaxation
+			- if we can certain that the best answers is outside the convex relaxation, then we know the best solution should in the boundary.
+			- thrust will inside a cone
+			- boundary of a convex set (sphere) if we can prove that inside a convex set it can work still like the 
+- L21: how to walk
+	- history:
+		- First legged robots build in 1960
+		- Serious research started in 1980
+		- Different Approaches:
+			- Hondu/Waseda: based on industrial manipulator
+			- floating base dynamics MPC 
+			- 最近十年：现在的猎豹最大的改进主要是硬件，电机可以有较低的齿轮比，因为扭矩已经足够，这样可以减少触地的损伤，传统的高齿轮比会受到较大伤害，并且控制带宽较低，但是这种新的电机也比较难以建模
+		- Full stack
+			- state estimater->position attitude -> gait/footstep planner->jiont controller-> motor_.state estimation
+			- sensors: joint encoders IMU, Contact force, vision/GPS 
+			- state Estimator: some kind of EKF with lots of tricks for reasoning about contact + foot slip
+			- Gait/Footstep Planner: plans placement + timing , swig-leg trajectories based on pre-specified gait desired body velocity
+			- MPC controller: Treats the robot as a single rigid body and assumes contact modes given by gait planner to compute contact forces.
+			- joint controller: try to follow the trajectory from planner and satisfy the body controller F and torque
+		- Legged Robot Dynamics
+			- 36 dimensions $n^{3}$ non smooth non linear
+		- Single Rigid Body / Centroidal Dynamics
+			- Assumptions
+				- 1. Leg maa/inertia << body ( 10%)
+				- 2. Leg actuator are very fast compared to body
+			- Use a lumped single-rigid-body model for the whole body
+			- m$\dot{v}$ =f-mg, $J\dot{w}+\omega$
+			- 3 assumptions:
+				- 1. w is very small
+				- 2. roll pitch is small
+				- 3. foot step is very close to trajectory
+			- we can derive a linear model![[Pasted image 20250330215927.png]]
+			- where to put the feet 
+				- use heuristic function
+					- r = rhip+$\frac{\Delta t}{2}v_{b}$
+			- MPC controller
+				- keep the trajectory xbar and ubar to track it
+				- constraints to conelimit but we cannot constraint the torque limit we hope it can work well
+			- 
+- [[recitation]]
+- [[代码总结]]

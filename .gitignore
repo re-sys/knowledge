@@ -1,0 +1,14 @@
+# Obsidian 文件
+.obsidian/
+**/.obsidian/
+
+# 敏感配置文件
+**/remotely-save/
+**/*config*.json
+**/*secret*.json
+**/*credential*.json
+
+# 环境变量文件
+.env
+.env.local
+*.env

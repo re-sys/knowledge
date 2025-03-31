@@ -1,0 +1,1 @@
+$\min\limits_{x_{1:N}u_{1:N}}=\sum_{i=1}^{N-1}\left( \frac{1}{2}x_{i}^{T}Qx_{i}+ \frac{1}{2}u_{i}^{T}Ru_{i} \right)+\frac{1}{2}x_{N}^{T}Q_{f}x_{N}$

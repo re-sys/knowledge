@@ -1,0 +1,31 @@
+- Overview, History, and Newtonian Mechanics Review
+	- history
+		- 1686 philosophy nature of principle start geometry calculus physics
+		- Lagrangian equation
+		- Hamilton extend the Lagrangian into a optimization
+		- Kane about momentum and let dynamics into computer
+		- geometry insight
+		- linear time robot dynamics algorithm
+		- pybullet use time stepping staff
+	- Newtonian Mechanics Review
+		- Describing motion of particle or point mass
+		- particle -> configuration is completely by position
+		- In coordinate-free form
+			- F=$\frac{d\vec{p}}{dt},\vec{p}=m\vec{v}$
+			- if m is constant then F=ma
+		- Note that we we can't actually do anything until we choose coordinates.
+		- basis stuff and component stuff
+		- pole coordinate
+			- $\begin{bmatrix}Fr \\ F\theta \end{bmatrix}=m\begin{bmatrix}\ddot{r}-r\dot{\theta}^{2} \\ r \ddot{\theta }+2\dot{r}\dot{\theta}\end{bmatrix}$
+			- it comes from e=cosex+sin ey
+			- $\theta=-\sin e_{x}+\cos(\theta)e_{y}$
+		- Becomes super impractical for complex
+			- Example: Pendulum
+				- $\ddot{\theta}=-\frac{l}{g}\sin(\theta)$
+			- constraint was non-trivial in Cartesian coordinates but simple in polar coordinates
+			- We could ignore the r-direction dynamics and only care about theta
+			- we also never had to explicitly calculate T (cable tension/constraint force)
+			- This system has 1 DOF If we can use just 1 coordinate we call that minimal or joint coordinate
+			- most current robotics simulators use minimal/joint coordinates.
+			- most current robotics simulates use minimal not always best option
+			- The opposite approach (full Cartesian coordinate explicit cartesian)
