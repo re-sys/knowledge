@@ -1032,6 +1032,9 @@
 			- Vehicle Dynamics
 				- Lots of options with different level of fidelity
 				- Most common "bicycle" or "single-track" model
-				- 
+			- state of art Nonlinear MPC
+				- Dynamic bicycle model with good tire gets you really far
+				- online MPC with IPOPT at 50Hz
+			- 
 - [[recitation]]
 - [[代码总结]]
