@@ -1028,6 +1028,10 @@
 		- perception, high-level ,planner, path planner MPC, motor
 		- High-level: route planning by graph search
 		- Path planner Generate Smooth spline with obstacle avoidance
-		- MPC
+		- MPC Controller: Track spline curve while reasoning about vehicle dynamics +constraints
+			- Vehicle Dynamics
+				- Lots of options with different level of fidelity
+				- Most common "bicycle" or "single-track" model
+				- 
 - [[recitation]]
 - [[代码总结]]
