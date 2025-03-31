@@ -1035,6 +1035,11 @@
 			- state of art Nonlinear MPC
 				- Dynamic bicycle model with good tire gets you really far
 				- online MPC with IPOPT at 50Hz
-			- 
+	- frozen robot
+		- in highway, car often cannot merge a save way into a combination road
+		- So we have to drive my car into the flow since other car don't want their car collided
+	- Game Theoretical
+		- solve joint optimization problem for all cars simultaneously
+		- We can assume other has some cost function and then solve a joint optimization
 - [[recitation]]
 - [[代码总结]]
