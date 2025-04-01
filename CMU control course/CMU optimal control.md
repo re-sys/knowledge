@@ -1041,5 +1041,11 @@
 	- Game Theoretical
 		- solve joint optimization problem for all cars simultaneously
 		- We can assume other has some cost function and then solve a joint optimization
+- L23: calculus of Variations, Physics as Trajectory Optimization Lagrange, Hamilton, and Pontryagia
+	- for example we can sample some point from x(t)
+	- when sample number becomes infinite
+		- calculus variation is to change the function when function is a variable
+		- And the this should be like $\partial \frac{F}{\partial x}(\Delta x(t))$
+		- 
 - [[recitation]]
 - [[代码总结]]
