@@ -1046,6 +1046,11 @@
 	- when sample number becomes infinite
 		- calculus variation is to change the function when function is a variable
 		- And the this should be like $\partial \frac{F}{\partial x}(\Delta x(t))$
-		- 
+		- we can direct write solve a optimization problem as to find the simulation
+		- We can use the calculus variation ti make the gradient =0
+			- we can get the Pontriygin principle
+			- also if we eliminate v by $\lambda$
+				- we can get the hamilton function
+				- 
 - [[recitation]]
 - [[代码总结]]
