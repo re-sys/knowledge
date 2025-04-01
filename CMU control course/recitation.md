@@ -259,3 +259,5 @@
 			- because it can quickly judge whether it collide
 			- and it has smooth differentiate
 		- fCBF is somehow less than 5 milliseconds
+- 11. HW4 walkthrough
+	- 
