@@ -6,4 +6,7 @@
 		- very column is perpendicular with other
 		- determinant = +1
 	- homogeneous transformation with the homogeneous vector can make the Euclidean transformation become linear
-	- 
+	- se3 is a infinite small version of T
+	- screw motion can represent the Euclidean transformation
+		- so we can use the small angular velocity and translate velocity to compute the stuff
+- data set
