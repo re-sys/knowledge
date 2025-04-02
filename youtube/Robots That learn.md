@@ -5,4 +5,5 @@
 		- every column has length of one
 		- very column is perpendicular with other
 		- determinant = +1
-		- 
+	- homogeneous transformation with the homogeneous vector can make the Euclidean transformation become linear
+	- 
