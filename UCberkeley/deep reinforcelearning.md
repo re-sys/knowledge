@@ -52,4 +52,11 @@
 - leveraging advanced of pretrained model
 	- tune a little pretrained model can deploy to other senario
 - what challenges still remain
-	- 
+	- great method can learn from huge amount of  data
+	- great optimization method for RL
+	- no amazing method that both use data and RL
+	- RL is slow than human
+	- transfer RL is open problem
+	- not clear what reward should be 
+	- not clear the role of prediction should be
+- 
