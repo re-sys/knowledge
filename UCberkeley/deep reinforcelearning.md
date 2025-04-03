@@ -59,4 +59,4 @@
 	- transfer RL is open problem
 	- not clear what reward should be 
 	- not clear the role of prediction should be
-- 
+-  

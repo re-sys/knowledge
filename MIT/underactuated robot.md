@@ -1,0 +1,14 @@
+- Lecture1 : Robot dynamics and model-based control
+	- different robot control strategy
+		- Altas: MPC + optimization
+		- Quadruped robot： RL
+		- manipulation: imitation
+	- what makes control difficult
+		- Uncertainty/partial observation: observation
+		- Actions have long-term consequence: controllability
+		- nonlinear, high dimension
+	- system representation
+		- $\ddot{q}=f_{1}(q,\dot{q})+f_{2}(q,\dot{q})u$
+			- "control affine" nonlinear system
+		- Def (1) is fully actuated in $q,\dot{q}$ iff $f_{2}(q,\dot{q})$ is full row rank
+		- Def 
