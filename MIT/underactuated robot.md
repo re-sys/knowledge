@@ -11,4 +11,13 @@
 		- $\ddot{q}=f_{1}(q,\dot{q})+f_{2}(q,\dot{q})u$
 			- "control affine" nonlinear system
 		- Def (1) is fully actuated in $q,\dot{q}$ iff $f_{2}(q,\dot{q})$ is full row rank
-		- Def 
+		- Def (1) is underactuated is iff above is wrong
+	- if actuated
+		- we can do the $\ddot{q}$ =u like equivalence
+		- but it will break if model uncertainty
+		- control limits
+		- state constraints
+	- Manipulator eqs
+		- $M(q)\ddot{q}+C(q,\dot{q})q=\Gamma(q)+Bu$
+		- kinematic energy T=$\frac{1}{2}\dot{q}^TM(q)\dot{q}$
+		- if B is full row rank it's actuated  
