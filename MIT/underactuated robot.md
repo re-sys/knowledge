@@ -27,4 +27,14 @@
 		- T=$\frac{1}{2}ml^{2}\dot{\theta}^{2}$
 		- $V=-mgl\cos\theta$
 		- L = T-V
-		- 
+		- do the dLdtdqdot-pLpq=Q
+		- then we get the one
+- Stable
+	- asymptotical stable
+	- region attractive
+	- exponential stable
+	- in sense of L
+- Recurrent neuron network
+	- we have a graphical theorem to check the fixed point
+	- it can memory some point and forget some point
+- 
