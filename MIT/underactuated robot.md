@@ -21,3 +21,10 @@
 		- $M(q)\ddot{q}+C(q,\dot{q})q=\Gamma(q)+Bu$
 		- kinematic energy T=$\frac{1}{2}\dot{q}^TM(q)\dot{q}$
 		- if B is full row rank it's actuated  
+## Lecture2: Nonlinear Dynamics
+- Simple Pendulum dynamics
+	- Using Lagrangian
+		- T=$\frac{1}{2}ml^{2}\dot{\theta}^{2}$
+		- $V=-mgl\cos\theta$
+		- L = T-V
+		- 
