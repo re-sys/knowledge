@@ -37,4 +37,7 @@
 - Recurrent neuron network
 	- we have a graphical theorem to check the fixed point
 	- it can memory some point and forget some point
-- 
+- doing vector field analysis
+	- we can see that pendulum work
+	- if actuated it can fully control all the point
+	- 
